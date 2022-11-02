@@ -2,8 +2,8 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
-const cloudinary = require("cloudinary");
-const cloudinaryStorage = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
 
 const User = require("../models/User");
@@ -14,19 +14,20 @@ const router = express.Router();
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
-  api_secret: process.env.API_SECRET
+  api_secret: process.env.API_SECRET,
+  secure: true,
 });
-const storage = cloudinaryStorage({
+
+const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   folder: "profilepics",
-  allowedFormats: ["jpg", "png"],
-  transformation: [{ width: 500, height: 500, crop: "limit" }]
+  format: ["jpg", "png"],
 });
 
 const upload = multer({ storage: storage }).single("image");
 
 router.get("/user/:id", (req, res) => {
-  User.findOne({ _id: req.params.id }).then(user => {
+  User.findOne({ _id: req.params.id }).then((user) => {
     res.send(user);
   });
 });
@@ -41,14 +42,14 @@ router.post("/user/signup", upload, (req, res) => {
       email: req.body.email,
       number: req.body.number,
       image: req.file.url,
-      password: hashPassword
+      password: hashPassword,
     },
     (err, user) => {
       if (err) return res.status(409).send({ message: err.message });
       console.log(user);
       //create token
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: 5000
+        expiresIn: 5000,
       });
       res.status(201).send({ token: token });
     }
@@ -67,19 +68,19 @@ router.post("/user/login", (req, res) => {
     if (!passwordIsValid)
       return res.status(403).send({ message: "login invalid" });
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: 86400 // expires in 24 hours
+      expiresIn: 86400, // expires in 24 hours
     });
     res.json({
       user: user,
       message: "Authenticated",
-      token: token
+      token: token,
     });
     console.log(token);
   });
 });
 
 router.delete("/user/delete/:id", (req, res) => {
-  User.findOneAndRemove(req.params.id, err => {
+  User.findOneAndRemove(req.params.id, (err) => {
     if (err) return next(err);
     res.send("Deleted successfully!");
   });
@@ -104,10 +105,10 @@ router.get("/user/:id/posts", (req, res, next) => {
 });
 
 // GET /logout
-router.get("/logout", function(req, res, next) {
+router.get("/logout", function (req, res, next) {
   if (req.session) {
     // delete session object
-    req.session.destroy(function(err) {
+    req.session.destroy(function (err) {
       if (err) {
         return next(err);
       } else {

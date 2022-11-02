@@ -7,36 +7,40 @@ const PostSchema = new Schema(
       type: String,
       required: [true, "author is required"],
       trim: true,
-      uppercase: true
     },
     title: {
       type: String,
       required: [true, "enter post title please"],
       trim: true,
-      uppercase: true
     },
-    post: {
+    content: {
       type: String,
       required: [true, "enter post field"],
-      trim: true
+    },
+    video_link: {
+      type: String,
     },
     image: {
       type: String,
-      required: [true],
-      trim: true
+      // required: [true],
+      trim: true,
     },
     likes_count: {
       type: Number,
-      default: 0
+      default: 0,
     },
     comments: [
       {
         type: Schema.Types.ObjectId,
-        ref: "Comment"
-      }
+        ref: "Comment",
+      },
     ],
+    category: {
+      type: String,
+      required: [true, "select category"],
+    },
 
-    date: { type: Date, default: Date.now }
+    date: { type: Date, default: Date.now },
   },
   { strict: false }
 );

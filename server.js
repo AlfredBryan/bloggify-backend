@@ -23,10 +23,8 @@ app.use("/api/v1", userRoutes);
 app.use("/api/v1", PostRoutes);
 
 // Connecting to Database
-mongoose.set("useCreateIndex", true);
 mongoose.connect(
-  process.env.DB_URL,
-  { useUnifiedTopology: true, useNewUrlParser: true },
+  "mongodb+srv://gist-fresh:Secure101@cluster0.0xmfc.mongodb.net/?retryWrites=true&w=majority",
   () => {
     console.log("Connected to MongoDB");
   }
