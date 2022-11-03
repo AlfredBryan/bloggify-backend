@@ -8,6 +8,7 @@ const router = express.Router();
 
 const Post = require("../models/Post");
 const Comment = require("../models/Comment");
+const Upload = require("../models/Uploads");
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -35,6 +36,21 @@ router.get("/posts", (req, res) => {
   });
 });
 
+//upload image in editor
+router.post("/upload", parser, (req, res) => {
+  Upload.create(
+    {
+      upload: req.file.secure_url,
+    },
+    (err, upload) => {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      res.status(200).send(upload);
+    }
+  );
+});
+
 // Adding a New Post
 router.post("/post/create", parser, (req, res) => {
   const { author, title, content, video_link, category } = req.body;
@@ -44,7 +60,7 @@ router.post("/post/create", parser, (req, res) => {
       title,
       content,
       category,
-      // image: req.file.secure_url,
+      image: req.file.secure_url,
       video_link,
     },
     (err, post) => {

@@ -22,7 +22,7 @@ const PostSchema = new Schema(
     },
     image: {
       type: String,
-      // required: [true],
+      required: [true],
       trim: true,
     },
     likes_count: {
