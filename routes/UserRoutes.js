@@ -17,13 +17,16 @@ cloudinary.config({
   api_secret: process.env.API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  folder: "profilepics",
-  format: ["jpg", "png"],
-});
+const storage = multer.diskStorage({});
 
-const upload = multer({ storage: storage }).single("image");
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image")) {
+    cb(null, true);
+  } else {
+    cb("invalid image file!", false);
+  }
+};
+const uploads = multer({ storage, fileFilter });
 
 router.get("/user/:id", (req, res) => {
   User.findOne({ _id: req.params.id }).then((user) => {
@@ -31,8 +34,9 @@ router.get("/user/:id", (req, res) => {
   });
 });
 
-router.post("/user/signup", upload, (req, res) => {
+router.post("/user/signup", uploads.single("image"), async (req, res) => {
   const hashPassword = bcrypt.hashSync(req.body.password, 10);
+  const result = await cloudinary.uploader.upload(req.file.path);
   User.create(
     {
       firstName: req.body.firstName,
@@ -40,7 +44,7 @@ router.post("/user/signup", upload, (req, res) => {
       username: req.body.username,
       email: req.body.email,
       number: req.body.number,
-      image: req.file.url,
+      image: result.url,
       password: hashPassword,
     },
     (err, user) => {
@@ -48,7 +52,7 @@ router.post("/user/signup", upload, (req, res) => {
       console.log(user);
       //create token
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: 5000,
+        expiresIn: 500000,
       });
       res.status(201).send({ token: token });
     }

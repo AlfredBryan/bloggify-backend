@@ -1,7 +1,6 @@
 const express = require("express");
 const multer = require("multer");
 const cloudinary = require("cloudinary");
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
 
 const router = express.Router();
@@ -17,13 +16,16 @@ cloudinary.config({
   secure: true,
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  folder: "profilepics",
-  format: ["jpg", "png"],
-});
+const storage = multer.diskStorage({});
 
-const parser = multer({ storage: storage }).single("image");
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image")) {
+    cb(null, true);
+  } else {
+    cb("invalid image file!", false);
+  }
+};
+const uploads = multer({ storage, fileFilter });
 
 // Getting All Post
 router.get("/posts", (req, res) => {
@@ -36,31 +38,37 @@ router.get("/posts", (req, res) => {
   });
 });
 
-//upload image in editor
-router.post("/upload", parser, (req, res) => {
-  Upload.create(
-    {
-      upload: req.file.secure_url,
-    },
-    (err, upload) => {
-      if (err) {
-        return res.status(500).send(err);
+router.post("/upload", uploads.single("image"), async (req, res) => {
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path);
+    Upload.create(
+      {
+        image: result.url,
+      },
+      (err, upload) => {
+        if (err) {
+          return res.status(500).send(err);
+        }
+        res.status(200).send(upload);
       }
-      res.status(200).send(upload);
-    }
-  );
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ err: "Something went wrong" });
+  }
 });
 
 // Adding a New Post
-router.post("/post/create", parser, (req, res) => {
+router.post("/post/create", uploads.single("image"), async (req, res) => {
   const { author, title, content, video_link, category } = req.body;
+  const result = await cloudinary.uploader.upload(req.file.path);
   Post.create(
     {
       author,
       title,
       content,
       category,
-      image: req.file.secure_url,
+      image: result.url,
       video_link,
     },
     (err, post) => {

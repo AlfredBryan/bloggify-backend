@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 
 const UploadSchema = new Schema(
   {
-    upload: {
+    image: {
       type: String,
       trim: true,
     },
