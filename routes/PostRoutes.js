@@ -132,7 +132,7 @@ router.get("/post/:id", (req, res, next) => {
 });
 
 //Deleting a post
-router.delete("/users/delete/:id", (req, res) => {
+router.delete("/post/delete/:id", (req, res) => {
   Post.findOneAndRemove(req.params.id, (err) => {
     if (err) return next(err);
     res.send("Deleted successfully!");
