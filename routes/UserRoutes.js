@@ -62,7 +62,6 @@ router.post("/user/signup", uploads.single("image"), async (req, res) => {
           username: req.body.username,
           image: result.url,
           password: hashPassword,
-          isAdmin: true,
         },
         (err, user) => {
           if (err) return res.status(409).send({ message: err.message });
