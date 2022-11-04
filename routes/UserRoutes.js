@@ -3,7 +3,6 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
 
 const User = require("../models/User");
@@ -37,26 +36,41 @@ router.get("/user/:id", (req, res) => {
 router.post("/user/signup", uploads.single("image"), async (req, res) => {
   const hashPassword = bcrypt.hashSync(req.body.password, 10);
   const result = await cloudinary.uploader.upload(req.file.path);
-  User.create(
-    {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      username: req.body.username,
-      email: req.body.email,
-      number: req.body.number,
-      image: result.url,
-      password: hashPassword,
-    },
-    (err, user) => {
-      if (err) return res.status(409).send({ message: err.message });
-      console.log(user);
-      //create token
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-        expiresIn: 500000,
-      });
-      res.status(201).send({ token: token });
+  const username = req.body.username.toLowerCase();
+  User.findOne({ username }, (err, user) => {
+    if (err) return res.status(500).send({ message: "registration  error" });
+    if (user) {
+      return res
+        .status(406)
+        .send({ message: "username has already been taken" });
+    } else {
+      User.create(
+        {
+          firstName: req.body.firstName,
+          lastName: req.body.lastName,
+          username: req.body.username,
+          image: result.url,
+          password: hashPassword,
+          isAdmin: true,
+        },
+        (err, user) => {
+          if (err) return res.status(409).send({ message: err.message });
+          //create token
+          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+            expiresIn: 500000,
+          });
+          const userData = {
+            first_name: user.firstName,
+            last_name: user.lastName,
+            username: user.username,
+            user_img: user.image,
+            isAdmin: user.isAdmin,
+          };
+          res.status(201).send({ token: token, userData });
+        }
+      );
     }
-  );
+  });
 });
 
 router.post("/user/login", (req, res) => {
@@ -71,14 +85,19 @@ router.post("/user/login", (req, res) => {
     if (!passwordIsValid)
       return res.status(403).send({ message: "login invalid" });
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: 86400, // expires in 24 hours
+      expiresIn: 860400, // expires in 24 hours
     });
+    const userData = {
+      first_name: user.firstName,
+      last_name: user.lastName,
+      image: user.image,
+      isAdmin: user.isAdmin,
+    };
     res.json({
-      user: user,
+      userData,
       message: "Authenticated",
       token: token,
     });
-    console.log(token);
   });
 });
 
