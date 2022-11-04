@@ -27,6 +27,17 @@ const fileFilter = (req, file, cb) => {
 };
 const uploads = multer({ storage, fileFilter });
 
+// Getting All Post
+router.get("/users", (req, res) => {
+  User.find({}, (err, users) => {
+    if (err) {
+      res.status(404).send("Error fetching users");
+      return;
+    }
+    res.status(200).send(users);
+  });
+});
+
 router.get("/user/:id", (req, res) => {
   User.findOne({ _id: req.params.id }).then((user) => {
     res.send(user);
