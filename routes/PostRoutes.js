@@ -95,6 +95,7 @@ router.get("/post/:id", (req, res, next) => {
 router.post("/post/:id/comment", (req, res) => {
   Post.findOne({ _id: req.params.id }).then((post) => {
     let comment = new Comment({
+      name: req.body.name,
       comment: req.body.comment,
     });
     post.comments.push(comment);
