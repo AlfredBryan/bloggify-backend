@@ -84,9 +84,10 @@ router.post("/post/create", uploads.single("image"), async (req, res) => {
 router.get("/post/:id", (req, res, next) => {
   Post.findById({ _id: req.params.id })
     .populate({ path: "comments", model: Comment })
-    .exec((err, post) => {
+    .exec( async(err, post) => {
       if (err) return res.status(505).send(err);
-
+      post.views = post.views + 1
+      await post.save();
       res.send(post);
     });
 });
